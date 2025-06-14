@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: houston-energy-analytics
+    ports:
+      - "5005:5005"
+    environment:
+      - STREAMLIT_SERVER_PORT=5005
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+      - USE_SQLITE=true
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    networks:
+      - energy-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: energy-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - energy-network
+    command: redis-server --appendonly yes
+
+  adminer:
+    image: adminer:4.8.1
+    container_name: energy-adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - app
+    restart: unless-stopped
+    networks:
+      - energy-network
+
+volumes:
+  redis_data:
+    driver: local
+
+networks:
+  energy-network:
+    driver: bridge
